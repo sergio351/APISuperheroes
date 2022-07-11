@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using SuperHeroeAPI.Data;
 using SuperHeroeAPI.Models;
 
 namespace SuperHeroeAPI.Controllers
@@ -29,18 +31,25 @@ namespace SuperHeroeAPI.Controllers
 
             }
          };
+        private readonly DataContext _context;
+    
+
+        public SuperHeroeController(DataContext context)
+        {
+            _context = context;
+        }
 
         [HttpGet]
         public async Task<ActionResult<List<SuperHeroe>>> Get()
         {
 
-            return Ok(heroes);//codigo 200 todo bien
+            return Ok(await _context.Superheroes.ToListAsync());//codigo 200 todo bien
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<List<SuperHeroe>>> Get(int id)
         {
-            var heroe = heroes.Find(h => h.Id == id);
+            var heroe = await _context.Superheroes.FindAsync(id);
             if (heroe == null)
             {
                 return BadRequest("No se encontro id");
@@ -52,35 +61,38 @@ namespace SuperHeroeAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<List<SuperHeroe>>> AddHeroe(SuperHeroe heroe)
         {
-            heroes.Add(heroe);
-            return Ok(heroes);//codigo 200 todo bien
+             _context.Superheroes.Add(heroe);
+            await _context.SaveChangesAsync();//codigo 200 todo bien
+            return Ok(await _context.Superheroes.ToListAsync());
         }
 
         [HttpPut]
         public async Task<ActionResult<List<SuperHeroe>>> UpdateHeroe(SuperHeroe request)
         {
-            var heroe = heroes.Find(h => h.Id == request.Id);
-            if (heroe == null)
+            var dbheroe =  await _context.Superheroes.FindAsync(request.Id);
+            if (dbheroe == null)
             {
                 return BadRequest("No se encontro id");
             }
-            heroe.Name = request.Name;
-            heroe.FirstName = request.FirstName;
-            heroe.LastName = request.LastName;
-            heroe.Place = request.Place;
-            return Ok(heroes);//codigo 200 todo bien
+            dbheroe.Name = request.Name;
+            dbheroe.FirstName = request.FirstName;
+            dbheroe.LastName = request.LastName;
+            dbheroe.Place = request.Place;
+            await _context.SaveChangesAsync();  
+            return Ok(await _context.Superheroes.ToListAsync());//codigo 200 todo bien
         }
 
         [HttpDelete("{id}")]
         public async Task<ActionResult<List<SuperHeroe>>> DeleteHeroe(int id)
         {
-            var heroe = heroes.Find(h => h.Id == id);
-            if (heroe == null)
+            var dbheroe = await _context.Superheroes.FindAsync(id);
+            if (dbheroe == null)
             {
                 return BadRequest("No se encontro id");
             }
-            heroes.Remove(heroe);
-            return Ok(heroes);//codigo 200 todo bien
+            _context.Superheroes.Remove(dbheroe);
+            await _context.SaveChangesAsync();
+            return Ok(await _context.Superheroes.ToListAsync());//codigo 200 todo bien
         }
     }
 }
